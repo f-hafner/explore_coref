@@ -1,11 +1,10 @@
-name: rel-coref
+name: use-parquet-files
 channels:
   - defaults
-  # - conda-forge
 dependencies:
-  - python ==3.8
+  - python 
   - ipykernel
   - numpy 
   - pandas 
   - matplotlib
-
+  - pyarrow
