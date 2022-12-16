@@ -12,6 +12,13 @@ n_mentions = d.groupby('identifier').size().reset_index(name="count")
 
 large_docs = n_mentions.loc[n_mentions['count'] > 2000, :]
 
+# save subset of data for trying out stuff
+keep_docids = ["msmarco_doc_00_0", "msmarco_doc_00_4806"]
+d_subset = d.loc[d['identifier'].isin(keep_docids), :]
+
+d_subset.to_parquet(f"{datapath}msmarco_md_subset.parquet")
+
+
 # this is the output from large_docs
 # 155   msmarco_doc_00_13707723   3957
 # 160   msmarco_doc_00_13953003   2315
