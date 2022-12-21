@@ -84,6 +84,8 @@ def count_entities(gold_entities, predicted_entities, gold_links, predicted_link
             wrong_el += 1 # correctly identified mention but wrong link 
     for gold_i in range(0, len(gold_links)): # missed = not detected in MD? ie, false negative in MD
         if gold_links[gold_i] == UNUSED:
+            # breakpoint()
+            print(f"gold entity missed: {gold_entities[gold_i]}") # also need the coreference here... 
             missed += 1
     return correct, wrong_md, wrong_el, missed
 
@@ -164,6 +166,7 @@ def evaluate(predictions, coref_only = False):
             predicted_entities.append([mention["mention"], mention["prediction"]])
         # predicted_entities and gold_entities are both a list of lists. each list is one mention with the string mention and the linked entity
         correct, wrong_md, wrong_el, missed = compare_and_count_entities(gold_entities, predicted_entities)
+        # return here an additional object: the missed coreferences
         correct_all += correct
         wrong_md_all += wrong_md
         wrong_el_all += wrong_el
