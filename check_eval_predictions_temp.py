@@ -1,4 +1,6 @@
 
+"work-in-progress script to adjust evaluate_predictions.py"
+
 import os 
 import pickle 
 import evaluate_predictions
@@ -48,11 +50,27 @@ for n in n_documents:
 
 
 # Evaluate predictions. The adjustment for the gold entities is made in evaluate_predictions.evaluate()
+missed_gold_dict = {}
 for version, d in predictions_for_coreferences.items():
     # this only works for the aida test data sets 
     if "aida_test" in version:
         print(f"Evaluating predictions for {version}")
-        evaluate_predictions.evaluate(d, coref_only=True)
+        missed_gold = evaluate_predictions.evaluate(d, coref_only=True)
+        missed_gold_dict[version] = missed_gold
+
+
+missed_counts = {}
+for version, missed in missed_gold_dict.items():
+    counts = {}
+    for m in missed:
+        m = tuple(m)
+        if m not in counts.keys():
+            counts[m] = 1
+        else:
+            counts[m] += 1
+    # sort by decreasing number of mentions 
+    counts = {k: v for k, v in sorted(counts.items(), key=lambda item: item[1], reverse=True)}
+    missed_counts[version] = counts
 
 
 # more generally it would be good to know which types of gold entities 
@@ -60,4 +78,6 @@ for version, d in predictions_for_coreferences.items():
     # this would require a function like with_coref that connects coreferring mentions and their coreferences
     # first ask Faegheh whether this is something worth doing 
     # for now, collect the missed entities in a separate object and return it from compare_and_count_entities()
+    # but note the counts probably more reflect occurrence frequencies--if a mention is not detected once, it is likely that it is not detected other times as well 
 # what does "--NME--" mean for the gold entities? 
+

@@ -73,6 +73,7 @@ def count_entities(gold_entities, predicted_entities, gold_links, predicted_link
     wrong_md = 0
     wrong_el = 0
     missed = 0
+    missed_gold_entities = []
     # predicted_links: assigns the id of gold_links to each detected mention 
     # gold_links: for each gold entity, indicates if it has not been found (gold_link = -1), and if found, which mention
     for predicted_i in range(0, len(predicted_links)): 
@@ -84,10 +85,10 @@ def count_entities(gold_entities, predicted_entities, gold_links, predicted_link
             wrong_el += 1 # correctly identified mention but wrong link 
     for gold_i in range(0, len(gold_links)): # missed = not detected in MD? ie, false negative in MD
         if gold_links[gold_i] == UNUSED:
-            # breakpoint()
-            print(f"gold entity missed: {gold_entities[gold_i]}") # also need the coreference here... 
+            # print(f"gold entity missed: {gold_entities[gold_i]}") # also need the coreference here... 
+            missed_gold_entities.append(gold_entities[gold_i])
             missed += 1
-    return correct, wrong_md, wrong_el, missed
+    return correct, wrong_md, wrong_el, missed, missed_gold_entities
 
 
 def compare_and_count_entities(gold_entities, predicted_entities):
@@ -154,24 +155,28 @@ def evaluate(predictions, coref_only = False):
     wrong_md_all = 0
     wrong_el_all = 0
     missed_all = 0
+    missed_gold_all = []
     for doc in predictions:
         gold_entities = get_gold_data(doc)
         if coref_only:
             # change the ground truth: only entities which we would identify as coreferences in REL
-            corefs = [find_coref(m, gold_entities) for m in gold_entities]
+            corefs = [find_coref(m, gold_entities, verbose=False) for m in gold_entities]
             coref_gold_ids = [i for i in range(len(corefs)) if len(corefs[i]) > 0]
             gold_entities = [gold_entities[i] for i in coref_gold_ids]
         predicted_entities = []
         for mention in predictions[doc]:
             predicted_entities.append([mention["mention"], mention["prediction"]])
         # predicted_entities and gold_entities are both a list of lists. each list is one mention with the string mention and the linked entity
-        correct, wrong_md, wrong_el, missed = compare_and_count_entities(gold_entities, predicted_entities)
+        correct, wrong_md, wrong_el, missed, missed_gold = compare_and_count_entities(gold_entities, predicted_entities)
         # return here an additional object: the missed coreferences
         correct_all += correct
         wrong_md_all += wrong_md
         wrong_el_all += wrong_el
         missed_all += missed
+        missed_gold_all += missed_gold
     print_scores(correct_all, wrong_md_all, wrong_el_all, missed_all)
+    if coref_only:
+        return missed_gold_all
 
 
 
@@ -180,7 +185,9 @@ def find_coref(mention, mentlist, verbose=False):
 
     coref = []
     cur_m = mention[0].lower() 
+    cur_m_entity = mention[1] # entity of the current mention
     for m in mentlist:
+        entity = m[1]
         m = m[0].lower()
         if cur_m == m:
             continue 
@@ -189,7 +196,7 @@ def find_coref(mention, mentlist, verbose=False):
             continue 
         end_pos = start_pos + len(cur_m) - 1
 
-        if (start_pos == 0 or m[start_pos - 1] == " "):
+        if (entity == cur_m_entity) and (start_pos == 0 or m[start_pos - 1] == " "):
             #  need to check the following sequentially:
             #  because gold mentions are not surrounded by text, end_pos+1 can be larger 
             #  than len(m), which would result in an error with the original code
