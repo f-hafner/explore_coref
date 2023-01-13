@@ -105,13 +105,16 @@ urlcolor=blue
 REL is a software for entity linking. Entity linking consists of three steps: mention detectio, candidate selection, and entity linking. Before entity linking, the current version of REL looks for coreferences in the detected mentions. Consider the example text: "This sentence is about Jimi Hendrix. The music of Hendrix is popular." Here, the second mention "Hendrix" refers to the entity "Jimi Hendrix" in the preceding sentence. Now, for each mention $m_i$, REL checks whether there is another mention $m_j$ that contains mention $m_i$ as a separate word. If this is the case, REL replaces the original candidate entities of $m_i$ with the candidate entities of $m_j$. Moreover, if there are multiple mentions $m_j$ that contain the same candidate entities, their $p(e|m)$ scores are aggregated for the mention $m_i$. Coreference search can make entity disambiguation more accurate if the original candidates for mention $m_i$ are more noisy than the selected candidates for $m_j$. 
 But this coreference search also slows down REL for large data sets because it has quadratic time complexity.
 
-I extend REL so that the user can choose from three options on how to deal with coreferences. The first option is "all" which corresponds to the current default of comparing all mentions with all other mentions. The second option is "off" that does not look for coreferences at all. It should be the most efficient. The third option is "lsh" that first applies locality-sensitive hashing (LSH) to all mentions, and then only searches for coreferences among mentions that are clustered together by LSH. If LSH is efficiently implemented, it could strike a balance between speed and accuracy for datasets with many mentions. 
+I extend REL so that the user can choose from three options on how to deal with coreferences. The first option is "all" which corresponds to the current default of comparing all mentions with all other mentions. The second option is "off" that does not look for coreferences at all. It should be the most efficient. The third option is "lsh" that first applies locality-sensitive hashing (LSH) to all mentions, and then only searches for coreferences among mentions that are clustered together by LSH. If LSH is efficiently implemented, it could strike a balance between efficiency and effectiveness for datasets with many mentions. 
 
 To assess the performance (efficiency and effectiveness) of the options, I run REL with the three options on three data sets: on the AIDA data to check effectiveness, and on synthetic AIDA data---stacking the mentions from AIDA multiple times---to check the time complexity with larger datasets. The purpose of the last run with the msmarco data is to check time complexity on real-world data. I try to check the effectiveness on these data by checking the fraction of mentions that are different between the two approaches. 
 
-The calculations are run on a Dell XPS 13 laptop, using Flair for mention detection. The settings for LSH are such that they have high precision and recall on the coreferring mentions in the AIDA ground truth data. 
-
 In what follows, I define coreferring mentions as mentions like the mention ``Hendrix'' above, and non-coreferring mentions as all other mentions.
+
+The calculations are run on a Dell XPS 13 laptop, using Flair and Wikipedia 2019 for mention detection. I set the limit number of documents from AIDA to 500, which processes all documents. 
+The settings for LSH are such that they have high precision and recall on the coreferring mentions in the AIDA ground truth data. 
+
+
 
 
 
@@ -119,45 +122,47 @@ In what follows, I define coreferring mentions as mentions like the mention ``He
 
 \subsection{Performance on AIDA data}
 
-Table~\ref{tab:performance_aida_full} shows precision, recall and F1 scores on the AIDA data sets (all documents) with the three options. The performance is a little lower for the ``lsh'' option than for the others. 
+Table~\ref{tab:performance_aida_full} shows precision, recall and F1 scores on the AIDA data sets (all documents) with the three options. The performance is a little lower for the ``lsh'' option than for the others. Regarding timing for ED, ``off'' is the fastest and ``lsh'' is the slowest option. 
+To compare to Erik's results (table 1 in his document), I ran REL also only with 50 documents. The effectiveness results are very similar to his results. The efficiency results, however, differ---in Erik's case, ED takes more than twice as long than in my case. I am not sure why this is.
 
 \begin{table}
- \begin{tabular}{c c c c c c c c c}
+ \begin{tabular}{c c c c c c c c c c}
 \hline
- coref option & \multicolumn{3}{c}{Mention detection} & \multicolumn{3}{c}{Entity linking}  \\
-        & Precision & Recall & F1 & Precision & Recall & F1 \\
+ coref option & \multicolumn{3}{c}{Mention detection} & \multicolumn{4}{c}{Entity linking}  \\
+        & Precision & Recall & F1 & Time & Precision & Recall & F1 \\
  \hline 
- ``all'' & 97.9\% & 62.9\% & 76.6\% & 62.1\% & 39.9\% & 48.6\% \\  
- ``off'' & 97.9\% & 62.9\% & 76.6\%  & 62.1\% & 39.9\% & 48.6\% \\ 
- ``lsh'' & 97.9\% & 62.9\% & 76.6\%  & 61.9\% & 39.7\% & 48.4\% \\
+ ``all'' & 97.9\% & 62.9\% & 76.6\% & 2.97 sec. & 62.1\% & 39.9\% & 48.6\% \\  
+ ``lsh'' & 97.9\% & 62.9\% & 76.6\% & 4.82 sec. & 62.0\% & 39.8\% & 48.5\% \\
+ ``off'' & 97.9\% & 62.9\% & 76.6\% & 2.43 sec.  & 62.1\% & 39.9\% & 48.6\% \\ 
 \hline 
 \end{tabular}
-\caption{Performance on AIDA data---all mentions}
+\caption{Performance on AIDA data---all mentions. Setup: processing all documents in AIDA data set with wikipedia 2019.}
 \label{tab:performance_aida_full}
 \end{table}
 
 
 Because only a minority of the mentions in the AIDA data are coreferences, I check the performance only coreferring mentions. To do this, I classify the gold mentions by whether they are coreferences or not using the same method as in REL, and then compare precision, recall and F1 scores only on these mentions. The results are in table~\ref{tab:performance_aida_corefs}. 
 
-First, we can compare the results from this restricted sample with the results from the full sample of mentions. We see that mention detection for coreferring mentions is much worse than for non-coreferring mentions---only 40 percent of coreferring mentions are detected, while 60 percent of all gold mentions are detected. 
+First, we can compare the results from this restricted sample with the results from the full sample of mentions. We see that recall for mention detection for coreferring mentions is much worse than for non-coreferring mentions---only 40 percent of coreferring mentions are detected, while 60 percent of all gold mentions are detected. 
 This could be (1) because coreferences are harder to detect, or (2) because some detected mentions are not labelled as coreferences because the mention they are referring to is not detected. I think case (1) is more likely.
 The tables also indicate that in the ED step, REL has a higher precision but a lower recall for coreferring mentions than non-coreferring mentions. 
 
-Second, we can compare the effectiveness of ED for the three options. The table shows a gradual decline in the performance, where suprisingly the option ``lsh'' performs worse than the option ``off''.
+Second, comparing the effectiveness of ED for the three options, we see that ``lsh'' performs worse than either of the alternatives.
+
 
 
 \begin{table}
- \begin{tabular}{c c c c c c c c c}
+ \begin{tabular}{c c c c c c c c c c}
 \hline
- coref option & \multicolumn{3}{c}{Mention detection} & \multicolumn{3}{c}{Entity linking}  \\
-        & Precision & Recall & F1 & Precision & Recall & F1 \\
+ coref option & \multicolumn{3}{c}{Mention detection} & \multicolumn{4}{c}{Entity linking}  \\
+        & Precision & Recall & F1 & Time & Precision & Recall & F1 \\
  \hline 
- ``all'' & 90.7\% & 36.7\% & 52.3\% & 78.8\% & 31.9\% & 45.4\% \\  
- ``off'' & 90.7\% & 36.7\% & 52.3\% & 76.8\% & 31.3\% & 44.4\% \\ 
- ``lsh'' & 90.7\% & 36.7\% & 52.3\% & 74.8\% & 30.4\% & 43.2\% \\
+ ``all'' & 90.7\% & 36.7\% & 52.3\% & --- & 78.8\% & 31.9\% & 45.4\% \\  
+ ``lsh'' & 90.7\% & 36.7\% & 52.3\% & --- & 76.2\% & 31.0\% & 44.1\% \\
+ ``off'' & 90.7\% & 36.7\% & 52.3\% & --- & 76.8\% & 31.3\% & 44.4\% \\ 
 \hline 
 \end{tabular}
-\caption{Performance on AIDA data---coreferring mentions}
+\caption{Performance on AIDA data---coreferring mentions. Setup: processing all documents in AIDA data set with wikipedia 2019. The timing is not reported because the results are taken from the same run as the results in table~\ref{tab:performance_aida_full}.}
 \label{tab:performance_aida_corefs}
 \end{table}
 
@@ -165,7 +170,7 @@ Second, we can compare the effectiveness of ED for the three options. The table 
 \subsection{Time complexity}
 To assess time complexity of the different options, I create a synthetic AIDA data set: For each document, I repeat the detected mentions multiple times to increase the size of the input, and then compare the running time for entity linking as a function of the size of the input. Figure~\ref{fig:timing_aida_scale} shows the results.
 Comparing option "off" with option "all", we see that the quadratic time complexity of "all" only starts to impact the overall running time when the number of mentions is higher than around 1500 mentions. This is because the \verb|__predict| function in REL has a relatively large overhead that dominates the running time of coreference search when the number of mentions is small (further results are available if necessary).
-Comparing option ``all'' with option ``lsh'', we that LSH currently has worse time complexity than the option ``all''. This is because LSH hashing is implemented inefficiently.
+Comparing option ``all'' with option ``lsh'', we see that LSH currently has worse time complexity than the option ``all''. This is because LSH hashing is implemented inefficiently.
 
 \begin{figure}[H]
   \centering
@@ -173,6 +178,19 @@ Comparing option ``all'' with option ``lsh'', we that LSH currently has worse ti
   \caption{Time complexity on synthetic AIDA data, with different coref options}
   \label{fig:timing_aida_scale}
 \end{figure}
+
+I also profile the execution time of each function in entity disambiguation for the synthetic data. Figure~\ref{fig:profile_aida_scale} shows the the time taken by the function \verb|with_coref|, which is the main function for coreference resolution. As before, the inefficient implementation of LSH slows down 
+\verb|with_coref|. But for the one trial with more than 10000 mentions, the time appears to be better for ``lsh'' than for ``all''.
+The current implementation of ``lsh'' creates large time overhead to deal with very many mentions. It is possible that for input with more than 10000 mentions, the quadratic time taken by ``all'' starts to dominate that overhead in ``lsh''. But further tests with larger datasets would be necesary to confirm this possibility.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width = 0.8\textwidth]{../figs/profile_aida_scale.pdf}
+  \caption{Profiling the function $with\_coref$ with synthetic AIDA data.}
+  \label{fig:profile_aida_scale}
+\end{figure}
+
+
 
 \subsection{Performance on msmarco data}
 
@@ -202,7 +220,7 @@ The figure shows considerable variation in the overlap of the predicted entities
 \begin{figure}
   \centering
   \includegraphics[width = 0.8\textwidth]{../figs/msmarco_overlap.pdf}
-  \caption{Time complexity on msmarco data, with different coref options}
+  \caption{Overlap in predicted entities, by mention type. One dot refers to the average overlap of one mention type in one document.}
   \label{fig:msmarco_overlap}
 \end{figure}
 
@@ -216,6 +234,8 @@ Lastly, figure~\ref{fig:timing_msmarco} show the timing of entity disambiguation
   \label{fig:timing_msmarco}
 \end{figure}
 
+
+% TODO: relate performance with ``off'' and ``on'' in AIDA to msmarco -- does it suggest these mentions are the same or different? 
 
 
 \section{Conclusion}
