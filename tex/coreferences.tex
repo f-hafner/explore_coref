@@ -259,7 +259,7 @@ There is one outlier for the option ``off'' in the top left corner that I do not
 \subsection{Summary}
 \begin{enumerate}
  \item For small input data, the coreference search is inconsequential for running time. Effectiveness is highest when using option ``all''.
- \item For large input data, efficiency is a problem when doing a full coreference search. Particularly for documents with many coreferring mentions the choice of the option could matter, depending on how strongly coreference search impacts effectiveness in the ED step. For coreferring mentions, the results from AIDA suggest that coreference search does not matter much but the results from msmarco differ more markedly when using coreference search than when not.
+ \item For large input data, efficiency is a problem when doing a full coreference search. Particularly for documents with many coreferring mentions the choice of the option could matter, depending on how strongly coreference search impacts effectiveness in the ED step. For coreferring mentions, the results from AIDA suggest that coreference search does not matter much. The results from msmarco suggest that coreference search has little impact on recall, but possibly large impact on precision of entity linking of coreferring mentions.
  \item For large input data, LSH could be a solution, but precisely in this case a time- and memory-efficient solution is key. Implementing a time-efficient LSH from scratch could take some time. There are external alternatives such as faiss (\href{https://github.com/facebookresearch/faiss}{\underline{link}}).
  \item An important reason for low recall for coreferring mentions is the mention detection, not the disambiguation, but these mentions are a small part of the total number of mentions in the AIDA data. And some of this may be resolved with the update for MD from Erik (which I have not yet integrated in my version of REL).
 \end{enumerate}
@@ -268,9 +268,9 @@ There is one outlier for the option ``off'' in the top left corner that I do not
 
 \begin{enumerate}
  \item The coreference search option ``all'' limits the scalability of REL for documents with 10k mentions or more. It is possible to integrate the option ``off'' into REL with little effort. Perhaps one can turn it to ``off'' as a default when the number of mentions is sufficiently large, with a respective warning/notification to the user. 
- \item LSH may be useful for a use case with large documents with possibly many coreferring mentions (but I do not know what kind of documents these could be). The options are either an external dependency, or I can consult with other people at the eScience Center to find out options to write an efficient solution from scratch.
-\end{enumerate}
+ \item LSH may be useful for a use case with large documents with possibly many coreferring mentions (but I do not know what kind of documents these could be). The options: (a) external dependency, (b) consult with other people at the eScience Center to find out options to write an efficient solution from scratch, (c) fork from SparseLSH (\href{https://github.com/brandonrobertz/SparseLSH}{\underline{link}}).
 
+\end{enumerate}
 
 
 
