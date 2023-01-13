@@ -88,6 +88,7 @@ urlcolor=blue
 
 \author{\textsc{Flavio Hafner}
 }
+\affil{Netherlands eScience Center}
 
 \date{\today}
 
@@ -102,8 +103,12 @@ urlcolor=blue
 
 \section{Introduction}
 
-REL is a software for entity linking. Entity linking consists of three steps: mention detectio, candidate selection, and entity linking. Before entity linking, the current version of REL looks for coreferences in the detected mentions. Consider the example text: "This sentence is about Jimi Hendrix. The music of Hendrix is popular." Here, the second mention "Hendrix" refers to the entity "Jimi Hendrix" in the preceding sentence. Now, for each mention $m_i$, REL checks whether there is another mention $m_j$ that contains mention $m_i$ as a separate word. If this is the case, REL replaces the original candidate entities of $m_i$ with the candidate entities of $m_j$. Moreover, if there are multiple mentions $m_j$ that contain the same candidate entities, their $p(e|m)$ scores are aggregated for the mention $m_i$. Coreference search can make entity disambiguation more accurate if the original candidates for mention $m_i$ are more noisy than the selected candidates for $m_j$. 
-But this coreference search also slows down REL for large data sets because it has quadratic time complexity.
+REL is a software for entity linking. Entity linking consists of three steps: mention detectio, candidate selection, and entity linking. Before entity linking, the current version of REL looks for coreferences in the detected mentions. Consider the example text: "This sentence is about Jimi Hendrix. The music of Hendrix is popular." Here, the second mention "Hendrix" refers to the entity "Jimi Hendrix" in the preceding sentence. Now, for each mention $m_i$, REL checks whether there is another mention $m_j$ that contains mention $m_i$ as a separate word. Denote the set of mentions $m_j$ that $m_i$ refers to by $R_i$.
+If $R_i$ is a singleton, REL replaces the original candidate entities of $m_i$ with the candidate entities of $m_j$.
+If $R_i$ contains multiple elements, the union of the unique candidate entities for all mentions  $m_j \in R_i$ are assigned as candidate entities for $m_i$. Moreover, for any candidate entity that appears in more than one mention $m_j \in R_i$, their $p(e|m)$ scores are aggregated for the mention $m_i$.
+
+Coreference search can make entity disambiguation more accurate if the original candidates for mention $m_i$ are more noisy than the selected candidates for $m_j$. 
+But coreference search also slows down REL for large data sets because it has quadratic time complexity.
 
 I extend REL so that the user can choose from three options on how to deal with coreferences. The first option is "all" which corresponds to the current default of comparing all mentions with all other mentions. The second option is "off" that does not look for coreferences at all. It should be the most efficient. The third option is "lsh" that first applies locality-sensitive hashing (LSH) to all mentions, and then only searches for coreferences among mentions that are clustered together by LSH. If LSH is efficiently implemented, it could strike a balance between efficiency and effectiveness for datasets with many mentions. 
 
@@ -141,7 +146,7 @@ To compare to Erik's results (table 1 in his document), I ran REL also only with
 \end{table}
 
 
-Because only a minority of the mentions in the AIDA data are coreferences, I check the performance only coreferring mentions. To do this, I classify the gold mentions by whether they are coreferences or not using the same method as in REL, and then compare precision, recall and F1 scores only on these mentions. The results are in table~\ref{tab:performance_aida_corefs}. 
+Because only a minority of the mentions in the AIDA data are coreferences, I now check the performance for coreferring mentions only. To do this, I classify the gold mentions by whether they are coreferences or not using the same method as in REL, and then compare precision, recall and F1 scores only on these mentions. The results are in table~\ref{tab:performance_aida_corefs}. 
 
 First, we can compare the results from this restricted sample with the results from the full sample of mentions. We see that recall for mention detection for coreferring mentions is much worse than for non-coreferring mentions---only 40 percent of coreferring mentions are detected, while 60 percent of all gold mentions are detected. 
 This could be (1) because coreferences are harder to detect, or (2) because some detected mentions are not labelled as coreferences because the mention they are referring to is not detected. I think case (1) is more likely.
@@ -169,24 +174,27 @@ Second, comparing the effectiveness of ED for the three options, we see that ``l
 
 \subsection{Time complexity}
 To assess time complexity of the different options, I create a synthetic AIDA data set: For each document, I repeat the detected mentions multiple times to increase the size of the input, and then compare the running time for entity linking as a function of the size of the input. Figure~\ref{fig:timing_aida_scale} shows the results.
-Comparing option "off" with option "all", we see that the quadratic time complexity of "all" only starts to impact the overall running time when the number of mentions is higher than around 1500 mentions. This is because the \verb|__predict| function in REL has a relatively large overhead that dominates the running time of coreference search when the number of mentions is small (further results are available if necessary).
-Comparing option ``all'' with option ``lsh'', we see that LSH currently has worse time complexity than the option ``all''. This is because LSH hashing is implemented inefficiently.
+
+The panel on the left compares option "off" with option "all". We see that the quadratic time complexity of "all" only starts to impact the overall running time when the number of mentions is higher than around 1500 mentions. This is because the \verb|__predict| function in REL has a relatively large overhead that dominates the running time of coreference search when the number of mentions is small (further evidence is available if necessary). But for an input of 10000 mentions, option ``all'' takes twice as long as option ``off''. 
+
+The panel on the right compares option ``all'' with option ``lsh''. We see that LSH currently has worse time complexity than the option ``all''. This is because LSH is implemented inefficiently.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width = 0.8\textwidth]{../figs/timing_aida_scale.pdf}
-  \caption{Time complexity on synthetic AIDA data, with different coref options}
+  \caption{Time complexity on synthetic AIDA data. Left: comparing ``all'' and ``off''. Right: comparing ``all'' and ``lsh''. The unit of observation is one document stacked $n$ times, 
+  $n \in \{5, 10, 50, 100\}$.}
   \label{fig:timing_aida_scale}
 \end{figure}
 
 I also profile the execution time of each function in entity disambiguation for the synthetic data. Figure~\ref{fig:profile_aida_scale} shows the the time taken by the function \verb|with_coref|, which is the main function for coreference resolution. As before, the inefficient implementation of LSH slows down 
 \verb|with_coref|. But for the one trial with more than 10000 mentions, the time appears to be better for ``lsh'' than for ``all''.
-The current implementation of ``lsh'' creates large time overhead to deal with very many mentions. It is possible that for input with more than 10000 mentions, the quadratic time taken by ``all'' starts to dominate that overhead in ``lsh''. But further tests with larger datasets would be necesary to confirm this possibility.
+The current implementation of ``lsh'' creates large time overhead to deal with very many mentions. It is possible that for input with more than 10000 mentions, the quadratic time taken by ``all'' starts to dominate that overhead in ``lsh''. But further tests with larger datasets would be necessary to confirm this possibility.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width = 0.8\textwidth]{../figs/profile_aida_scale.pdf}
-  \caption{Profiling the function $with\_coref$ with synthetic AIDA data.}
+  \caption{Profiling the function $with\_coref$ with synthetic AIDA data. See the notes for figure~\ref{fig:timing_aida_scale} for details on the sample.}
   \label{fig:profile_aida_scale}
 \end{figure}
 
@@ -194,10 +202,18 @@ The current implementation of ``lsh'' creates large time overhead to deal with v
 
 \subsection{Performance on msmarco data}
 
-As there is no ground truth for the msmarco data set, I check the overlap of the predicted entities for the same mention when using either the option ``off'' or ``on''. I exclude the option ``lsh''---it does not run out of memory anymore, but the solution cannot compete on running time with the other options. 
+\subsubsection{Effectiveness}
 
-I start by comparing the fraction of mentions that have the same predicted entity by aggregating across all documents. Having labelled each mention as a coreferring mention or not, I do this separately by coreferring mentions and non-coreferring mentions. Table~\ref{tab:performance_msmarco_avg} shows the results: nearly all mentions that are not coreferring have the same linked entity, but only 40 percent of coreferring mentions have the same linked entity. 
-The lack of a ground truth prevents from drawing conclusions about which of the option is performing better. But the low overlap for coreferring mentions suggests that the choice of coref option can matter for documents with many coreferring mentions.
+To get an idea of recall and precision despite not having a ground truth, I compare the linked entities for mentions with options ``off'' and ``on''.  I exclude the option ``lsh''---it does not run out of memory anymore, but the solution cannot compete on running time with the other options. 
+During the run with ``all'' I also label mentions as whether they are coreferring or not. This allows me to focus on these mentions in the following analysis.
+
+
+\paragraph{Approximating recall}
+One can compare whether some mentions that are linked to an entity with ``all'' are not linked with ``off''. I find that only 0.3 percent of coreferring mentions are linked in ``all'' but not linked in ``off'', suggesting that recall is very similar for the two options (but of course it says nothing about the level of recall).
+
+
+\paragraph{Approximating precision}
+Now I focus on the mentions that are linked. I start by comparing the fraction of mentions that have the same predicted entity by aggregating across all documents. Table~\ref{tab:performance_msmarco_avg} shows the results: nearly all mentions that are not coreferring have the same linked entity, but only 40 percent of coreferring mentions have the same linked entity. This implies a huge variability in the precision of the linked entities for coreferring mentions, but the lack of ground truth prevents from drawing conclusions about which of the options is performing better. 
 
 \begin{table}
  \begin{tabular}{c c c c}
@@ -208,42 +224,42 @@ The lack of a ground truth prevents from drawing conclusions about which of the 
  yes & 8767 & 0.402 & 0.490 \\ 
 \hline 
 \end{tabular}
-\caption{Fraction of mentions with the same linked entity}
+\caption{Fraction of mentions with the same linked entity for options ``off'' and ``all''.}
 \label{tab:performance_msmarco_avg}
 \end{table}
 
-Now I compare the overlap of predicted entities by document. Figure~\ref{fig:msmarco_overlap} plots the fraction of mentions with the same predicted entity separately for all mentions, coreferring mentions, and non-coreferring mentions (panel b). The x-axis is the total number of linked mentions in a document.
-To abstract from cases with very few coreferring mentions, I focus on documents with at least five such mentions. 
+Now I compare the overlap of predicted entities by document. Overlap is the fraction of mentions in a document that have the same predicted entity. 
+Figure~\ref{fig:msmarco_overlap} plots the overlap separately for all mentions, coreferring mentions, and non-coreferring mentions. The x-axis is the total number of linked mentions in a document.
+All panels show the data for documents with at least five coreferring mentions.
 
 The figure shows considerable variation in the overlap of the predicted entities overall, stemming from variation in the overlap for the coreferring mentions. The data do not allow to draw conclusions about whether there is a relation between the number of linked mentions in the document and the overlap in the predicted entities for coreferring mentions.
 
-\begin{figure}
+\begin{figure}[H]
   \centering
   \includegraphics[width = 0.8\textwidth]{../figs/msmarco_overlap.pdf}
-  \caption{Overlap in predicted entities, by mention type. One dot refers to the average overlap of one mention type in one document.}
+  \caption{Overlap in predicted entities, by mention type. The unit of observation is the document.}
   \label{fig:msmarco_overlap}
 \end{figure}
 
+\subsubsection{Efficiency}
 
-Lastly, figure~\ref{fig:timing_msmarco} show the timing of entity disambiguation with the two options; it confirms the findings on the time complexity with the synthetic AIDA data. There is one outlier for for the option ``off'' that I do not know where it comes from. 
+Lastly, figure~\ref{fig:timing_msmarco} show the timing of entity disambiguation with the two options; it confirms the findings on the time complexity with the synthetic AIDA data. Again, the running time is not very different for documents with a few thousand mentions. But for the largest document with 15k mentions, option ``all'' takes about 50 seconds while ``off'' takes 30 seconds.
 
-\begin{figure}
+There is one outlier for the option ``off'' in the top left corner that I do not know where it comes from. 
+
+\begin{figure}[H]
   \centering
   \includegraphics[width = 0.8\textwidth]{../figs/timing_msmarco.pdf}
-  \caption{Time complexity on msmarco data, with different coref options}
+  \caption{Time complexity on msmarco data for options ``all'' and ``off''. The unit of observation is the document.}
   \label{fig:timing_msmarco}
 \end{figure}
-
-
-% TODO: relate performance with ``off'' and ``on'' in AIDA to msmarco -- does it suggest these mentions are the same or different? 
-
 
 \section{Conclusion}
 
 \subsection{Summary}
 \begin{enumerate}
  \item For small input data, the coreference search is inconsequential for running time. Effectiveness is highest when using option ``all''.
- \item For large input data, efficiency is a problem when doing a full coreference search. Particularly for documents with many coreferring mentions the choice of the option could matter.
+ \item For large input data, efficiency is a problem when doing a full coreference search. Particularly for documents with many coreferring mentions the choice of the option could matter, depending on how strongly coreference search impacts effectiveness in the ED step. For coreferring mentions, the results from AIDA suggest that coreference search does not matter much but the results from msmarco differ more markedly when using coreference search than when not.
  \item For large input data, LSH could be a solution, but precisely in this case a time- and memory-efficient solution is key. Implementing a time-efficient LSH from scratch could take some time. There are external alternatives such as faiss (\href{https://github.com/facebookresearch/faiss}{\underline{link}}).
  \item An important reason for low recall for coreferring mentions is the mention detection, not the disambiguation, but these mentions are a small part of the total number of mentions in the AIDA data. And some of this may be resolved with the update for MD from Erik (which I have not yet integrated in my version of REL).
 \end{enumerate}
@@ -251,7 +267,7 @@ Lastly, figure~\ref{fig:timing_msmarco} show the timing of entity disambiguation
 \subsection{Implications}
 
 \begin{enumerate}
- \item Including the coref options ``off'' and ``all'' in REL should not take too much time. Perhaps one can turn it to ``off'' as a default when the number of mentions is sufficiently large, with a respective warning/notification to the user.
+ \item The coreference search option ``all'' limits the scalability of REL for documents with 10k mentions or more. It is possible to integrate the option ``off'' into REL with little effort. Perhaps one can turn it to ``off'' as a default when the number of mentions is sufficiently large, with a respective warning/notification to the user. 
  \item LSH may be useful for a use case with large documents with possibly many coreferring mentions (but I do not know what kind of documents these could be). The options are either an external dependency, or I can consult with other people at the eScience Center to find out options to write an efficient solution from scratch.
 \end{enumerate}
 

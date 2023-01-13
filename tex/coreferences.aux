@@ -20,25 +20,29 @@
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \babel@aux{english}{}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Results}{2}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Performance on AIDA data}{2}{subsection.2.1}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Performance on AIDA data---all mentions. Setup: processing all documents in AIDA data set with wikipedia 2019.\relax }}{3}{table.caption.1}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
 \newlabel{tab:performance_aida_full}{{1}{3}{Performance on AIDA data---all mentions. Setup: processing all documents in AIDA data set with wikipedia 2019.\relax }{table.caption.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Performance on AIDA data---coreferring mentions. Setup: processing all documents in AIDA data set with wikipedia 2019. The timing is not reported because the results are taken from the same run as the results in table~\ref  {tab:performance_aida_full}.\relax }}{3}{table.caption.2}\protected@file@percent }
-\newlabel{tab:performance_aida_corefs}{{2}{3}{Performance on AIDA data---coreferring mentions. Setup: processing all documents in AIDA data set with wikipedia 2019. The timing is not reported because the results are taken from the same run as the results in table~\ref {tab:performance_aida_full}.\relax }{table.caption.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Time complexity}{3}{subsection.2.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Time complexity on synthetic AIDA data, with different coref options\relax }}{4}{figure.caption.3}\protected@file@percent }
-\newlabel{fig:timing_aida_scale}{{1}{4}{Time complexity on synthetic AIDA data, with different coref options\relax }{figure.caption.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Profiling the function $with\_coref$ with synthetic AIDA data.\relax }}{5}{figure.caption.4}\protected@file@percent }
-\newlabel{fig:profile_aida_scale}{{2}{5}{Profiling the function $with\_coref$ with synthetic AIDA data.\relax }{figure.caption.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Performance on msmarco data}{5}{subsection.2.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Fraction of mentions with the same linked entity\relax }}{6}{table.caption.5}\protected@file@percent }
-\newlabel{tab:performance_msmarco_avg}{{3}{6}{Fraction of mentions with the same linked entity\relax }{table.caption.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Overlap in predicted entities, by mention type. One dot refers to the average overlap of one mention type in one document.\relax }}{6}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:msmarco_overlap}{{3}{6}{Overlap in predicted entities, by mention type. One dot refers to the average overlap of one mention type in one document.\relax }{figure.caption.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Time complexity on msmarco data, with different coref options\relax }}{7}{figure.caption.7}\protected@file@percent }
-\newlabel{fig:timing_msmarco}{{4}{7}{Time complexity on msmarco data, with different coref options\relax }{figure.caption.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Conclusion}{7}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Summary}{7}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Implications}{8}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Results}{3}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Performance on AIDA data}{3}{subsection.2.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Performance on AIDA data---coreferring mentions. Setup: processing all documents in AIDA data set with wikipedia 2019. The timing is not reported because the results are taken from the same run as the results in table~\ref  {tab:performance_aida_full}.\relax }}{4}{table.caption.2}\protected@file@percent }
+\newlabel{tab:performance_aida_corefs}{{2}{4}{Performance on AIDA data---coreferring mentions. Setup: processing all documents in AIDA data set with wikipedia 2019. The timing is not reported because the results are taken from the same run as the results in table~\ref {tab:performance_aida_full}.\relax }{table.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Time complexity}{4}{subsection.2.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Time complexity on synthetic AIDA data. Left: comparing ``all'' and ``off''. Right: comparing ``all'' and ``lsh''. The unit of observation is one document stacked $n$ times, $n \in \{5, 10, 50, 100\}$.\relax }}{5}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:timing_aida_scale}{{1}{5}{Time complexity on synthetic AIDA data. Left: comparing ``all'' and ``off''. Right: comparing ``all'' and ``lsh''. The unit of observation is one document stacked $n$ times, $n \in \{5, 10, 50, 100\}$.\relax }{figure.caption.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Profiling the function $with\_coref$ with synthetic AIDA data. See the notes for figure~\ref  {fig:timing_aida_scale} for details on the sample.\relax }}{6}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:profile_aida_scale}{{2}{6}{Profiling the function $with\_coref$ with synthetic AIDA data. See the notes for figure~\ref {fig:timing_aida_scale} for details on the sample.\relax }{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Performance on msmarco data}{6}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.1}Effectiveness}{6}{subsubsection.2.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Approximating recall}{6}{paragraph*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Approximating precision}{6}{paragraph*.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Fraction of mentions with the same linked entity for options ``off'' and ``all''.\relax }}{7}{table.caption.7}\protected@file@percent }
+\newlabel{tab:performance_msmarco_avg}{{3}{7}{Fraction of mentions with the same linked entity for options ``off'' and ``all''.\relax }{table.caption.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Overlap in predicted entities, by mention type. The unit of observation is the document.\relax }}{8}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:msmarco_overlap}{{3}{8}{Overlap in predicted entities, by mention type. The unit of observation is the document.\relax }{figure.caption.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.2}Efficiency}{8}{subsubsection.2.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Time complexity on msmarco data for options ``all'' and ``off''. The unit of observation is the document.\relax }}{9}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:timing_msmarco}{{4}{9}{Time complexity on msmarco data for options ``all'' and ``off''. The unit of observation is the document.\relax }{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Conclusion}{9}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Summary}{9}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Implications}{10}{subsection.3.2}\protected@file@percent }
