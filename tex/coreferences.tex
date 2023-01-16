@@ -204,48 +204,65 @@ The current implementation of ``lsh'' creates large time overhead to deal with v
 
 \subsubsection{Effectiveness}
 
-To get an idea of recall and precision despite not having a ground truth, I compare the linked entities for mentions with options ``off'' and ``on''.  I exclude the option ``lsh''---it does not run out of memory anymore, but the solution cannot compete on running time with the other options. 
+To get an idea of recall and precision despite not having a ground truth, I compare the linked entities for mentions with options ``off'' and ``lsh'' to the linked entities with option ``all''. 
 During the run with ``all'' I also label mentions as whether they are coreferring or not. This allows me to focus on these mentions in the following analysis.
 
 
 \paragraph{Approximating recall}
-One can compare whether some mentions that are linked to an entity with ``all'' are not linked with ``off''. I find that only 0.3 percent of coreferring mentions are linked in ``all'' but not linked in ``off'', suggesting that recall is very similar for the two options (but of course it says nothing about the level of recall).
+One can compare whether some mentions that are linked to an entity with ``all'' are not linked with the other options. 
+I find that ``off'' finds 0.3 percent fewer coreferring mentions than ``all''. ``lsh'' finds 0.01 percent fewer coreferring mentions than ``all''.
+This suggests that recall is very similar for all options, and that ``lsh'' is slightly better than ``off''. 
 
 
 \paragraph{Approximating precision}
-Now I focus on the mentions that are linked. I start by comparing the fraction of mentions that have the same predicted entity by aggregating across all documents. Table~\ref{tab:performance_msmarco_avg} shows the results: nearly all mentions that are not coreferring have the same linked entity, but only 40 percent of coreferring mentions have the same linked entity. This implies a huge variability in the precision of the linked entities for coreferring mentions, but the lack of ground truth prevents from drawing conclusions about which of the options is performing better. 
+Now I focus on the mentions that are linked. I start by comparing the fraction of mentions that have the same predicted entity by aggregating across all documents. Table~\ref{tab:performance_msmarco_avg} shows the results.
+Nearly all mentions that are not coreferring have the same linked entity. 
+But among coreferring mentions, when using ``off'' only 40 percent of mentions have the same linked entity. When using ``lsh'', 83 percent of mentions have the same linked entity.
+This implies a substantial variability in the precision of the linked entities for coreferring mentions. But the lack of ground truth prevents from drawing conclusions about whether ``off'' is better than ``all''.  
 
 \begin{table}
- \begin{tabular}{c c c c}
+ \begin{tabular}{c c c c c c c}
  \hline
- coreferring mention & count & mean & std \\
+ coreferring mention   & \multicolumn{3}{c}{``off''} & \multicolumn{3}{c}{``lsh''} \\
+    & count & mean & std & count & mean & std \\
  \hline 
- no & 247754 & 0.99 & 0.056  \\  
- yes & 8767 & 0.402 & 0.490 \\ 
+ no & 247754 & 0.99 & 0.056 & 247754 &	0.999 &	0.031 \\  
+ yes & 8767 & 0.402 & 0.490 & 8767 & 0.83   &	0.38	 \\ 
 \hline 
 \end{tabular}
-\caption{Fraction of mentions with the same linked entity for options ``off'' and ``all''.}
+\caption{Fraction of mentions for options ``off'' and ``lsh'' with the same linked entity as in option ``all''.}
 \label{tab:performance_msmarco_avg}
 \end{table}
 
 Now I compare the overlap of predicted entities by document. Overlap is the fraction of mentions in a document that have the same predicted entity. 
-Figure~\ref{fig:msmarco_overlap} plots the overlap separately for all mentions, coreferring mentions, and non-coreferring mentions. The x-axis is the total number of linked mentions in a document.
+Figure~\ref{fig:msmarco_overlap_off} plots the overlap separately for all mentions, coreferring mentions, and non-coreferring mentions. The x-axis is the total number of linked mentions in a document.
 All panels show the data for documents with at least five coreferring mentions.
 
 The figure shows considerable variation in the overlap of the predicted entities overall, stemming from variation in the overlap for the coreferring mentions. The data do not allow to draw conclusions about whether there is a relation between the number of linked mentions in the document and the overlap in the predicted entities for coreferring mentions.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width = 0.8\textwidth]{../figs/msmarco_overlap.pdf}
+  \includegraphics[width = 0.8\textwidth]{../figs/msmarco_overlap_off.pdf}
   \caption{Overlap in predicted entities, by mention type. The unit of observation is the document.}
-  \label{fig:msmarco_overlap}
+  \label{fig:msmarco_overlap_off}
 \end{figure}
+
+
+Figure~\ref{fig:msmarco_overlap_lsh} shows the same data, comparing ``lsh'' with ``all''. In line with the aggregate results from table~\ref{tab:performance_msmarco_avg}, ``lsh'' has a higher overlap for coreferring mentions.
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width = 0.8\textwidth]{../figs/msmarco_overlap_lsh.pdf}
+  \caption{Overlap in predicted entities, by mention type. The unit of observation is the document.}
+  \label{fig:msmarco_overlap_lsh}
+\end{figure}
+
 
 \subsubsection{Efficiency}
 
-Lastly, figure~\ref{fig:timing_msmarco} show the timing of entity disambiguation with the two options; it confirms the findings on the time complexity with the synthetic AIDA data. Again, the running time is not very different for documents with a few thousand mentions. But for the largest document with 15k mentions, option ``all'' takes about 50 seconds while ``off'' takes 30 seconds.
+I now compare the running time for options ``all'' and ``off''. I omit ``lsh'' because, as shown in the AIDA data, it is not efficiently implemented at the moment. Figure~\ref{fig:timing_msmarco} shows the running time of entity linking as a function of document size; it confirms the findings on the time complexity with the synthetic AIDA data. Again, the running time is not very different for documents with a few thousand mentions. But for the largest document with 15k mentions, option ``all'' takes about 50 seconds while ``off'' takes 30 seconds.
 
-There is one outlier for the option ``off'' in the top left corner that I do not know where it comes from. 
 
 \begin{figure}[H]
   \centering
@@ -258,8 +275,9 @@ There is one outlier for the option ``off'' in the top left corner that I do not
 
 \subsection{Summary}
 \begin{enumerate}
- \item For small input data, the coreference search is inconsequential for running time. Effectiveness is highest when using option ``all''.
- \item For large input data, efficiency is a problem when doing a full coreference search. Particularly for documents with many coreferring mentions the choice of the option could matter, depending on how strongly coreference search impacts effectiveness in the ED step. For coreferring mentions, the results from AIDA suggest that coreference search does not matter much. The results from msmarco suggest that coreference search has little impact on recall, but possibly large impact on precision of entity linking of coreferring mentions.
+ \item For small input data (up to around 2000 mentions), the coreference search is inconsequential for running time. Effectiveness is highest when using option ``all''.
+ \item For large input data, efficiency is a problem when doing a full coreference search. Particularly for documents with many coreferring mentions the choice of the option could matter, depending on how strongly coreference search impacts effectiveness in the ED step. 
+ \item The results for effectiveness of ED for coreferring mentions perhaps suggest that recall is similar for either ``off'' or ``all''. But the results for precision are not clear-cut. The results from AIDA show similar precision for either option, but the results from msmarco suggest a possibly large impact on precision between options ``off'' and ``all''.
  \item For large input data, LSH could be a solution, but precisely in this case a time- and memory-efficient solution is key. Implementing a time-efficient LSH from scratch could take some time. There are external alternatives such as faiss (\href{https://github.com/facebookresearch/faiss}{\underline{link}}).
  \item An important reason for low recall for coreferring mentions is the mention detection, not the disambiguation, but these mentions are a small part of the total number of mentions in the AIDA data. And some of this may be resolved with the update for MD from Erik (which I have not yet integrated in my version of REL).
 \end{enumerate}
@@ -268,7 +286,7 @@ There is one outlier for the option ``off'' in the top left corner that I do not
 
 \begin{enumerate}
  \item The coreference search option ``all'' limits the scalability of REL for documents with 10k mentions or more. It is possible to integrate the option ``off'' into REL with little effort. Perhaps one can turn it to ``off'' as a default when the number of mentions is sufficiently large, with a respective warning/notification to the user. 
- \item LSH may be useful for a use case with large documents with possibly many coreferring mentions (but I do not know what kind of documents these could be). The options: (a) external dependency, (b) consult with other people at the eScience Center to find out options to write an efficient solution from scratch, (c) fork from SparseLSH (\href{https://github.com/brandonrobertz/SparseLSH}{\underline{link}}).
+ \item LSH may be useful for a use case with large documents with possibly many coreferring mentions (but I do not know what kind of documents these could be). The options: (a) external dependency, or (b) consult with other people at the eScience Center to find out options to write an efficient solution from scratch. Lastly, some literature review and online search suggests that perhaps a small tweak to the current lsh implementation could speed it up considerably, but I have not yet tried it out. 
 
 \end{enumerate}
 
